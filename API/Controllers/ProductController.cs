@@ -21,4 +21,11 @@ public class ProductController : ControllerBase
     {
         return Ok(await _productService.GetProducts());
     }
+    
+    [HttpGet("{productId}")]
+    public async Task<IActionResult> GetSingle([FromRoute] Guid productId)
+    {
+        
+        return Ok(await _productService.GetProduct(productId));
+    }
 }

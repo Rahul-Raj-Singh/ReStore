@@ -25,4 +25,10 @@ public class ProductService
 
         return products;
     }
+    public async Task<Product> GetProduct(Guid productId)
+    {
+        var product = await _context.Products.FindAsync(productId);
+
+        return product;
+    }
 }
