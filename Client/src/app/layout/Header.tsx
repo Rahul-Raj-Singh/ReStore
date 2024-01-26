@@ -24,7 +24,7 @@ const navStyles = {
 
 type HeaderProps = {
     darkMode: boolean;
-    onChangeDarkMode: (_: any, checked: boolean) => void
+    onChangeDarkMode: (_: React.ChangeEvent, checked: boolean) => void
 };
 
 export default function Header({darkMode, onChangeDarkMode}: HeaderProps) {

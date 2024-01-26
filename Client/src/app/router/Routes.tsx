@@ -5,6 +5,8 @@ import Catalog from "../../features/catalog/Catalog";
 import AboutPage from "../../features/about/AboutPage";
 import ContactPage from "../../features/contact/ContactPage";
 import ProductDetail from "../../features/catalog/ProductDetail";
+import ServerErrorPage from "../error/ServerErrorPage";
+import NotFoundPage from "../error/NotFoundPage";
 
 export const router = createBrowserRouter([
     {
@@ -31,6 +33,14 @@ export const router = createBrowserRouter([
                 path: "contact",
                 element: <ContactPage/>
             },
+            {
+                path: "server-error",
+                element: <ServerErrorPage/>
+            },
+            {
+                path: "*",
+                element: <NotFoundPage/>
+            }
         ]
     }
 ]);

@@ -1,8 +1,9 @@
 import { Grid, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material'
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom'
-import { Product } from '../../app/models/Product';
+import { Product } from '../../app/models/product';
+import agent from '../../app/api/agent';
+import Loading from '../../app/layout/Loading';
 
 export default function ProductDetail() {
 
@@ -11,14 +12,14 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`https://localhost:5000/api/product/${productId}`)
-    .then(res => setProduct(res.data))
+    agent.requests.get(`product/${productId}`)
+    .then(res => setProduct(res))
     .catch(err => console.error(err))
     .finally(() => setLoading(false))
 
   }, [productId])
 
-  if (loading) return <Typography variant='h3'>Loading...</Typography>
+  if (loading) return <Loading/>
 
   if (!product) return <Typography variant='h3'>Product does not exist!</Typography>
 

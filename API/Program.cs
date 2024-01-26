@@ -1,4 +1,5 @@
 using API.DataAccess;
+using API.Middleware;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,8 +17,11 @@ builder.Services.AddDbContext<StoreContext>(options => {
 });
 
 builder.Services.AddCors();
+builder.Services.AddScoped<ExceptionHandlingMiddleware>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
