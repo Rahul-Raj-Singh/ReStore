@@ -1,25 +1,60 @@
-import { Grid, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material'
-import { useEffect, useState } from 'react';
+import { Button, Grid, Table, TableBody, TableCell, TableRow, TextField, Typography } from '@mui/material'
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom'
 import { Product } from '../../app/models/product';
 import agent from '../../app/api/agent';
 import Loading from '../../app/layout/Loading';
+import { useStoreContext } from '../../app/context/StoreProvider';
 
 export default function ProductDetail() {
 
   const {productId} = useParams<{productId: string}>();
+  const {basket, setBasket, removeItem} = useStoreContext();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [quantity, setQuantity] = useState(0);
+  const [loadingForBasket, setLoadingForBasket] = useState(false);
+
+  const existingItem = basket?.basketItems.find(x => x.productId == productId);
 
   useEffect(() => {
     agent.requests.get(`product/${productId}`)
     .then(res => setProduct(res))
     .catch(err => console.error(err))
     .finally(() => setLoading(false))
-
   }, [productId])
 
-  if (loading) return <Loading/>
+  useEffect(() => {
+    if (existingItem) setQuantity(existingItem.quantity);
+  }, [existingItem])
+
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+    if (+event.target.value < 0) return;
+    setQuantity(+event.target.value);
+  }
+
+  function handleQuantityUpdate() {
+    setLoadingForBasket(true);
+    if (existingItem && quantity < existingItem.quantity) // remove item from basket
+    {
+      agent.requests
+      .delete(`basket?productId=${productId}&quantity=${existingItem.quantity - quantity}`)
+      .then(() => removeItem(productId!, existingItem.quantity - quantity))
+      .catch(error => console.error(error))
+      .finally(() => setLoadingForBasket(false))
+    }
+    else // add item to basket
+    {
+      agent.requests
+      .post(`basket?productId=${productId}&quantity=${quantity - (existingItem?.quantity ?? 0)}`, {})
+      .then(response => setBasket(response))
+      .catch(error => console.error(error))
+      .finally(() => setLoadingForBasket(false))
+    }
+  }
+
+  if (loading || loadingForBasket) return <Loading/>
 
   if (!product) return <Typography variant='h3'>Product does not exist!</Typography>
 
@@ -55,6 +90,25 @@ export default function ProductDetail() {
             </TableRow>
           </TableBody>
         </Table>
+        <Grid container marginTop={2} spacing={2}>
+          <Grid item xs={6}>
+            <TextField
+              variant="outlined"
+              label="Quantity in cart"
+              type="number"
+              fullWidth
+              value={quantity}
+              onChange={handleInputChange}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <Button variant="contained" fullWidth 
+              disabled={existingItem?.quantity == quantity} sx={{height: 55}} 
+              onClick={handleQuantityUpdate}>{
+              existingItem ? "Update cart" : "Add to cart"
+            }</Button>
+          </Grid>
+        </Grid>
       </Grid>
     </Grid>
   )

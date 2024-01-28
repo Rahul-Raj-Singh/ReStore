@@ -29,7 +29,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
 
             var responseBody = new ProblemDetails
             {
-                Title = "Server Error",
+                Title = "Server Error: " + ex.Message,
                 Detail = _env.IsDevelopment() ? ex.StackTrace.ToString() : null,
                 Status = 500
             };
