@@ -4,12 +4,14 @@ import { useParams } from 'react-router-dom'
 import { Product } from '../../app/models/product';
 import agent from '../../app/api/agent';
 import Loading from '../../app/layout/Loading';
-import { useStoreContext } from '../../app/context/StoreProvider';
+import { useAppDispatch, useAppSelector } from '../../app/store/store';
+import { removeItem, setBasket } from '../basket/basketSlice';
 
 export default function ProductDetail() {
 
   const {productId} = useParams<{productId: string}>();
-  const {basket, setBasket, removeItem} = useStoreContext();
+  const {basket} = useAppSelector(state => state.basket);
+  const dispatch = useAppDispatch();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +42,7 @@ export default function ProductDetail() {
     {
       agent.requests
       .delete(`basket?productId=${productId}&quantity=${existingItem.quantity - quantity}`)
-      .then(() => removeItem(productId!, existingItem.quantity - quantity))
+      .then(() => dispatch(removeItem({productId: productId!, quantity: existingItem.quantity - quantity})))
       .catch(error => console.error(error))
       .finally(() => setLoadingForBasket(false))
     }
@@ -48,7 +50,7 @@ export default function ProductDetail() {
     {
       agent.requests
       .post(`basket?productId=${productId}&quantity=${quantity - (existingItem?.quantity ?? 0)}`, {})
-      .then(response => setBasket(response))
+      .then(basket => dispatch(setBasket(basket)))
       .catch(error => console.error(error))
       .finally(() => setLoadingForBasket(false))
     }

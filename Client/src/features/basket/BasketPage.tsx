@@ -1,22 +1,24 @@
 import { useState } from "react"
 import { Box, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Add, Delete, Remove } from "@mui/icons-material";
-import { useStoreContext } from "../../app/context/StoreProvider";
 import { LoadingButton } from "@mui/lab";
 import agent from "../../app/api/agent";
 import BasketSummary from "./BasketSummary";
+import { useAppDispatch, useAppSelector } from "../../app/store/store";
+import { removeItem, setBasket } from "./basketSlice";
 
 export default function BasketPage() {
 
     const [loadingStatus, setLoadingStatus] = useState({loading: false, name: ""});
-    const {basket, setBasket, removeItem} = useStoreContext();
+    const {basket} = useAppSelector(state => state.basket);
+    const dispatch = useAppDispatch();
 
     function handleRemoveItem(productId: string, quantity: number, name: string) {
         setLoadingStatus({loading: true, name});
 
         agent.requests
         .delete(`basket?productId=${productId}&quantity=${quantity}`)
-        .then(() => removeItem(productId, quantity))
+        .then(() => dispatch(removeItem({productId, quantity})))
         .catch(error => console.error(error))
         .finally(() => setLoadingStatus({loading: false, name: ""}))
     }
@@ -26,7 +28,7 @@ export default function BasketPage() {
 
         agent.requests
         .post(`basket?productId=${productId}&quantity=${quantity}`, {})
-        .then((response) => setBasket(response))
+        .then((basket) => dispatch(setBasket(basket)))
         .catch(error => console.error(error))
         .finally(() => setLoadingStatus({loading: false, name: ""}))
     }

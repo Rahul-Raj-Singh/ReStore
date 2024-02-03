@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import { LoadingButton } from '@mui/lab'
 import { useState } from 'react'
 import agent from '../../app/api/agent'
-import { useStoreContext } from '../../app/context/StoreProvider'
+import { useAppDispatch } from '../../app/store/store'
+import { setBasket } from '../basket/basketSlice'
 
 type ProductCardProps = {
     product: Product
@@ -13,14 +14,14 @@ type ProductCardProps = {
 export default function ProductCard({product}: ProductCardProps) {
 
   const [loading, setLoading] = useState(false);
-  const {setBasket} = useStoreContext();
+  const dispatch = useAppDispatch();
 
   function handleAddItem(productId: string) {
     setLoading(true);
 
     agent.requests
     .post(`basket?productId=${productId}&quantity=1`, {})
-    .then(reponse => setBasket(reponse))
+    .then(basket => dispatch(setBasket(basket)))
     .catch(error => console.error(error))
     .finally(() => setLoading(false));
 

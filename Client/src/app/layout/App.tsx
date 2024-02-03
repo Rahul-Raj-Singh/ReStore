@@ -5,14 +5,15 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/ReactToastify.css"
-import { useStoreContext } from "../context/StoreProvider";
 import agent from "../api/agent";
 import Loading from "./Loading";
 import { getCookie } from "../utils/util";
+import { useAppDispatch } from "../store/store";
+import { setBasket } from "../../features/basket/basketSlice";
 
 function App() {
 
-  const {setBasket} = useStoreContext();
+  const dispatch = useAppDispatch();
   const [darkMode, setDarkMode] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -23,11 +24,11 @@ function App() {
 
     agent.requests
       .get("basket")
-      .then(response => setBasket(response))
+      .then(basket => dispatch(setBasket(basket)))
       .catch(error => console.log(error))
       .finally(() => setLoading(false));
       
-  }, [setBasket])
+  }, [dispatch])
 
   function handleDarkModeChange(_: React.ChangeEvent, checked: boolean) {
     setDarkMode(checked);
