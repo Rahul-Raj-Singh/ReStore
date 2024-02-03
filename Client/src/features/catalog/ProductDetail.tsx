@@ -5,18 +5,19 @@ import { Product } from '../../app/models/product';
 import agent from '../../app/api/agent';
 import Loading from '../../app/layout/Loading';
 import { useAppDispatch, useAppSelector } from '../../app/store/store';
-import { removeItem, setBasket } from '../basket/basketSlice';
+import { addItemToBasketAsync, removeItemFromBasketAsync } from '../basket/basketSlice';
 
 export default function ProductDetail() {
 
   const {productId} = useParams<{productId: string}>();
-  const {basket} = useAppSelector(state => state.basket);
+
+  const {basket, status} = useAppSelector(state => state.basket);
   const dispatch = useAppDispatch();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [quantity, setQuantity] = useState(0);
-  const [loadingForBasket, setLoadingForBasket] = useState(false);
 
   const existingItem = basket?.basketItems.find(x => x.productId == productId);
 
@@ -28,7 +29,10 @@ export default function ProductDetail() {
   }, [productId])
 
   useEffect(() => {
-    if (existingItem) setQuantity(existingItem.quantity);
+    if (existingItem) 
+      setQuantity(existingItem.quantity);
+    else
+      setQuantity(1)
   }, [existingItem])
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -37,26 +41,17 @@ export default function ProductDetail() {
   }
 
   function handleQuantityUpdate() {
-    setLoadingForBasket(true);
     if (existingItem && quantity < existingItem.quantity) // remove item from basket
     {
-      agent.requests
-      .delete(`basket?productId=${productId}&quantity=${existingItem.quantity - quantity}`)
-      .then(() => dispatch(removeItem({productId: productId!, quantity: existingItem.quantity - quantity})))
-      .catch(error => console.error(error))
-      .finally(() => setLoadingForBasket(false))
+      dispatch(removeItemFromBasketAsync({productId: productId!, quantity: existingItem.quantity - quantity}))
     }
     else // add item to basket
     {
-      agent.requests
-      .post(`basket?productId=${productId}&quantity=${quantity - (existingItem?.quantity ?? 0)}`, {})
-      .then(basket => dispatch(setBasket(basket)))
-      .catch(error => console.error(error))
-      .finally(() => setLoadingForBasket(false))
+      dispatch(addItemToBasketAsync({productId: productId!, quantity: quantity - (existingItem?.quantity ?? 0)}))
     }
   }
 
-  if (loading || loadingForBasket) return <Loading/>
+  if (loading || (status.includes("pendingAdd"))) return <Loading/>
 
   if (!product) return <Typography variant='h3'>Product does not exist!</Typography>
 
@@ -105,7 +100,7 @@ export default function ProductDetail() {
           </Grid>
           <Grid item xs={6}>
             <Button variant="contained" fullWidth 
-              disabled={existingItem?.quantity == quantity} sx={{height: 55}} 
+              disabled={existingItem?.quantity == quantity || (!existingItem && quantity === 0)} sx={{height: 55}} 
               onClick={handleQuantityUpdate}>{
               existingItem ? "Update cart" : "Add to cart"
             }</Button>
