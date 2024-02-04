@@ -1,32 +1,28 @@
 import { Button, Grid, Table, TableBody, TableCell, TableRow, TextField, Typography } from '@mui/material'
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom'
-import { Product } from '../../app/models/product';
-import agent from '../../app/api/agent';
 import Loading from '../../app/layout/Loading';
 import { useAppDispatch, useAppSelector } from '../../app/store/store';
 import { addItemToBasketAsync, removeItemFromBasketAsync } from '../basket/basketSlice';
+import { fetchSingleProductAsync, productSelectors } from './catalogSlice';
 
 export default function ProductDetail() {
 
   const {productId} = useParams<{productId: string}>();
 
-  const {basket, status} = useAppSelector(state => state.basket);
+  const {basket, status: basketStatus} = useAppSelector(state => state.basket);
   const dispatch = useAppDispatch();
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const product = useAppSelector(state => productSelectors.selectById(state, productId!));
+  const {status: catalogStatus} = useAppSelector(state => state.catalog);
 
   const [quantity, setQuantity] = useState(0);
 
   const existingItem = basket?.basketItems.find(x => x.productId == productId);
 
   useEffect(() => {
-    agent.requests.get(`product/${productId}`)
-    .then(res => setProduct(res))
-    .catch(err => console.error(err))
-    .finally(() => setLoading(false))
-  }, [productId])
+    if (!product) dispatch(fetchSingleProductAsync(productId!));
+  }, [product, productId, dispatch])
 
   useEffect(() => {
     if (existingItem) 
@@ -36,8 +32,11 @@ export default function ProductDetail() {
   }, [existingItem])
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
-    if (+event.target.value < 0) return;
-    setQuantity(+event.target.value);
+    if (!event.target.value) return 0;
+
+    if (parseInt(event.target.value) < 0) return;
+    
+    setQuantity(parseInt(event.target.value));
   }
 
   function handleQuantityUpdate() {
@@ -51,7 +50,7 @@ export default function ProductDetail() {
     }
   }
 
-  if (loading || (status.includes("pendingAdd"))) return <Loading/>
+  if (catalogStatus.includes("pending") || basketStatus.includes("pending")) return <Loading/>
 
   if (!product) return <Typography variant='h3'>Product does not exist!</Typography>
 
