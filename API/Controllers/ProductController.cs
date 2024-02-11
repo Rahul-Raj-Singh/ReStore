@@ -1,3 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using API.Extensions;
+using API.RequestHelpers;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,9 +21,14 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get([FromQuery] ProductParams productParams)
     {
-        return Ok(await _productService.GetProducts());
+        var products = await _productService.GetProducts(productParams);
+
+        Response.AddPaginationHeader(products.MetaData);
+
+        return Ok(products);
+
     }
     
     [HttpGet("{productId}")]
@@ -27,5 +36,13 @@ public class ProductController : ControllerBase
     {
         
         return Ok(await _productService.GetProduct(productId));
+    }
+
+    [HttpGet("filters")]
+    public async Task<IActionResult> GetFilters()
+    {
+        var obj = await _productService.GetAllBrandsAndTypes();
+
+        return Ok(obj);
     }
 }

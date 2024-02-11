@@ -14,9 +14,9 @@ import { store } from './app/store/store.ts';
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <Provider store={store}>
       <RouterProvider router={router}/>
     </Provider>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 )

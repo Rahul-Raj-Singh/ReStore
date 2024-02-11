@@ -10,6 +10,15 @@ axios.defaults.withCredentials = true;
 axios.interceptors.response.use(
     async (response: AxiosResponse) => {
         await sleep(0.5);
+
+        // override response obj to include pagination-metadata if it exists
+        if (response.headers["paginationmetadata"]) {
+            response.data = {
+                data: response.data,
+                metadata: JSON.parse(response.headers["paginationmetadata"])
+            }
+        }
+
         return response;
     }, 
     (error: AxiosError) => {
@@ -33,8 +42,8 @@ axios.interceptors.response.use(
 })
 
 const requests = {
-    get: async function(url: string) {
-        const response = await axios.get(url);
+    get: async function(url: string, params?: URLSearchParams) {
+        const response = await axios.get(url, {params});
         const data = response.data;
         return data;
     },
