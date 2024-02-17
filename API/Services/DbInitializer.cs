@@ -1,15 +1,36 @@
 using API.DataAccess;
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Services;
 
 public static class DbInitializer
 {
-    public static void SeedDb(StoreContext context)
+    public static async Task SeedDb(StoreContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
-        if (context.Products.Any()) return;
+        if (!roleManager.Roles.Any())
+        {
+            var admin = new IdentityRole {Name = "admin", NormalizedName = "ADMIN"};
+            var member = new IdentityRole {Name = "member", NormalizedName = "MEMBER"};
 
-        var seedProducts = new List<Product>
+            await roleManager.CreateAsync(admin);
+            await roleManager.CreateAsync(member);
+        }
+
+        if (!userManager.Users.Any())
+        {
+            var bob = new User {UserName = "bob", Email = "bob@test.com"};
+            await userManager.CreateAsync(bob, "Password@123");
+            await userManager.AddToRoleAsync(bob, "Member");
+
+            var admin = new User {UserName = "admin", Email = "admin@test.com"};
+            await userManager.CreateAsync(admin, "Password@123");
+            await userManager.AddToRolesAsync(admin, new[] {"Admin", "Member"});
+        }
+
+        if (!context.Products.Any())
+        {
+            var seedProducts = new List<Product>
         {
             new Product
             {
@@ -208,8 +229,9 @@ public static class DbInitializer
                 QuantityInStock = 100
             }
         };
+            context.Products.AddRange(seedProducts);
+            context.SaveChanges();
+        }
 
-        context.Products.AddRange(seedProducts);
-        context.SaveChanges();
     }
 }
